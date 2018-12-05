@@ -2,4 +2,3 @@
 
 void StartWebServer();
 void ProcessWebServerRequests();
-void WriteWlanConfig(String ssid, String password);

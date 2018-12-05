@@ -1,0 +1,60 @@
+<span *ngIf="!connecting">
+  <div class="mat-elevation-z8" *ngIf="!selectedWiFi">
+    <table mat-table class="full-width-table" [dataSource]="dataSource" aria-label="Elements">
+
+      <ng-container matColumnDef="channel">
+        <th mat-header-cell *matHeaderCellDef>Channel</th>
+        <td mat-cell *matCellDef="let row">{{row.channel}}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="name">
+        <th mat-header-cell *matHeaderCellDef>Name</th>
+        <td mat-cell *matCellDef="let row">{{row.name}}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="encrypted">
+        <th mat-header-cell *matHeaderCellDef>Encrypted</th>
+        <td mat-cell *matCellDef="let row">
+          <i *ngIf="row.encrypted" class="material-icons">lock</i>
+          <i *ngIf="!row.encrypted" class="material-icons">lock_open</i>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="signal">
+        <th mat-header-cell *matHeaderCellDef>Signal</th>
+        <td mat-cell *matCellDef="let row">{{row.signal}} DBm</td>
+      </ng-container>
+
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef></th>
+        <td mat-cell *matCellDef="let row">
+          <button *ngIf="!row.active" mat-flat-button color="primary" (click)="select(row)">Connect</button>
+          <span *ngIf="row.active">Connected</span>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+    </table>
+
+  </div>
+
+  <mat-card class="password-card" *ngIf="selectedWiFi">
+      <div class="password-form">
+          <div class="password-full-width">
+            <span>Enter the password for '{{selectedWiFi.name}}' network</span>
+          </div>
+          <mat-form-field class="password-full-width">
+            <input matInput placeholder="Password" type="password" [(ngModel)]="password" autofocus>
+          </mat-form-field>
+          <button mat-flat-button color="primary" (click)="select(null)">Back</button>&nbsp;
+          <button mat-flat-button color="primary" (click)="connect()">Connect</button>
+        </div>
+  </mat-card>
+</span>
+<span *ngIf="connecting">
+  <mat-card class="spinner-card" *ngIf="!message">
+    <mat-spinner style="margin:0 auto;" ></mat-spinner>
+  </mat-card>
+  <h3 class="message">{{message}}</h3>
+</span>

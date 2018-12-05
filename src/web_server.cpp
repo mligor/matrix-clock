@@ -1,6 +1,9 @@
 #include "web_server.h"
+#include "config.h"
+
 #include <WebServer.h>
 #include <SPIFFS.h>
+#include <ArduinoJson.h>
 
 WiFiServer server(80);
 
@@ -13,6 +16,7 @@ void StartWebServer()
 const char* APPLICATION_JSON = "application/json";
 const char* TEXT_PLAIN = "text/plain";
 const char* INDEX_HTML = "/index.html";
+const char* OK_MESSAGE = "{\"message\":\"ok\"}";
 
 void SendOKHeader(WiFiClient& client, String contentType, size_t contentSize = 0)
 {
@@ -25,6 +29,13 @@ void SendOKHeader(WiFiClient& client, String contentType, size_t contentSize = 0
 	if (contentSize)
 		client.println("Content-Length: " + String(contentSize, 10));
 	
+	client.println();
+}
+
+void SendErrorHeader(WiFiClient& client, int errorCode, String errorMessage)
+{
+	client.println("HTTP/1.1 " + String(errorCode, 10) + " " + errorMessage);
+	client.println("Connection: close");
 	client.println();
 }
 
@@ -52,8 +63,10 @@ bool HandleStaticFile(const String& path, WiFiClient& client)
 			contentType = "text/html; charset=UTF-8";
 		else if (extension == "js")
 			contentType = "application/javascript; charset=utf-8";
-		else if (extension == "js")
+		else if (extension == "css")
 			contentType = "text/css";
+		else if (extension == "woff2")
+			contentType = "font/woff2";
 	}
 	SendOKHeader(client, contentType, f.size());
 	client.write(f);
@@ -64,28 +77,54 @@ bool HandleRESTRequest(const String& mode, const String& path, WiFiClient& clien
 {
 	if (mode == "GET")
 	{
-		if (path == "/scan")
+		if (path == "/wifi-scan")
 		{
 			SendOKHeader(client, APPLICATION_JSON);
+
+			StaticJsonBuffer<2048> jsonBuffer;
+			JsonArray& root = jsonBuffer.createArray();
 			int numSsid = WiFi.scanNetworks();
-			for (int thisNet = 0; thisNet < numSsid; thisNet++) {
-				client.print(thisNet);
-				client.print(") ");
-				client.print(WiFi.SSID(thisNet));
-				client.print("\tSignal: ");
-				client.print(WiFi.RSSI(thisNet));
-				client.print(" dBm");
-				client.println("");
+			for (int thisNet = 0; thisNet < numSsid && thisNet < 10; thisNet++) {
+
+				JsonObject& item = root.createNestedObject();
+				item["name"] = WiFi.SSID(thisNet);
+				item["channel"] = WiFi.channel(thisNet);
+				item["encrypted"] = (WiFi.encryptionType(thisNet) != WIFI_AUTH_OPEN);
+				item["signal"] = WiFi.RSSI(thisNet);
+				item["connected"] = WiFi.BSSID() == WiFi.BSSID(thisNet);
 			}
+			root.printTo(client);
 			return true;
 		}
 	}
 	else if (mode == "POST")
 	{
-		if (path == "/wificonfig")
+		if (path == "/wifi-config")
 		{
+			char buff[200];
+			size_t contentSize = client.readBytes(buff, 200);
+			if (contentSize == 200)
+			{
+				SendErrorHeader(client, 413, "Payload too large");
+				return true;
+			}
+			buff[contentSize] = 0;
+			
+			StaticJsonBuffer<200> jsonBuffer;
+			JsonObject& root = jsonBuffer.parseObject(buff);
+
+			root["ssid"].asString();
+			root["password"].asString();
+
+			if (!WriteWlanConfig(root["ssid"].asString(), root["password"].asString()))
+			{
+				SendErrorHeader(client, 500, "Unable to write");
+				return true;
+			}
+
 			SendOKHeader(client, TEXT_PLAIN);
-			client.write("not yet implemented");
+			client.println(OK_MESSAGE);
+			ESP.restart();
 		}
 	}
 

@@ -6,5 +6,7 @@ void ReadConfig();
 bool ConfigIsWifiConfigured();
 String ConfigGetWifiSSID();
 String ConfigGetWifiPassword();
+bool WriteWlanConfig(String ssid, String password);
+
 
 #endif
