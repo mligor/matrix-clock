@@ -34,6 +34,22 @@ RunningMode runningMode{rmUnknown};
 StatusLedMode statusLedMode{slmOff};
 int wifiStatus = WL_IDLE_STATUS;
 
+void ReadFromTerminal()
+{
+	if (Serial.available())
+	{
+		String command = Serial.readString();
+		command.trim();
+		Serial.println("CMD: " + command);
+
+		if (command == "wifireset")
+		{
+			WriteWlanConfig("", "");
+			ESP.restart();
+		}
+	}	
+}
+
 
 void setup()
 {
@@ -75,6 +91,7 @@ void setup()
 void loop()
 {
 	status_led(STATUS_LED, statusLedMode);
+	ReadFromTerminal();
 
 	if (runningMode == rmConnecting)
 	{

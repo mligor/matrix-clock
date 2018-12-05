@@ -124,6 +124,8 @@ bool HandleRESTRequest(const String& mode, const String& path, WiFiClient& clien
 
 			SendOKHeader(client, TEXT_PLAIN);
 			client.println(OK_MESSAGE);
+			client.stop();
+			delay(1000);
 			ESP.restart();
 		}
 	}
