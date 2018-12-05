@@ -9,10 +9,10 @@ String wifi_password;
 void ReadConfig()
 {
 	// As the WriteWlanConfig is not working, we return hard coded settings
-	wifi_configured = true;
-	wifi_ssid = "_my_ssid_";
-	wifi_password = "_my_password_";
-	return;
+	// wifi_configured = true;
+	// wifi_ssid = "_my_ssid_";
+	// wifi_password = "_my_password_";
+	// return;
 
 	int eepromAddress = 0;
 	wifi_configured = EEPROM.readBool(eepromAddress);
