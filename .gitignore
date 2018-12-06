@@ -6,4 +6,4 @@
 .vscode/launch.json
 /data
 .DS_Store
-/matrix-clock.code-workspace
+*.code-workspace
