@@ -35,8 +35,26 @@ I decided to go with arudino framework. I think using esp-idf would be more flex
 
 When first time started - clock should provide own WiFi network to allow configuration over Web Inteface or over REST server (using mobile App).
 
-## About myself
+## How to build
 
-This is my first project of this scale. I'm software developer for the last 25 years, and I can call myself expert in C/C++ but with electronic I did only small hobby projects (mostly using atmel and pic microcontrollers with few sensors and LEDs).
+### Requirements
 
-Recently I'm using go, node.js and Angular for REST based Web Applications.
+- Visual Studio Code with PlatformIO extension
+- NodeJS
+
+### Building
+
+- Open root folder in Visual Studio Code
+- Open Terminal in VSC and go into sub directory www-src
+- From there run `npm i` to install all required node/angular/typescript libraries
+- Run `npm run-script build` from the same folder to generate HTML files in project `data` folder
+- Run Visual Studio Code Build task `PlatformIO: Build` (Ctrl+Shift+B or Cmd+Shift+B on MacOS)
+- To Upload code and Filesystem to your ESP32, use PlatformIO Project Tasks (Upload File System Image and Upload). You can start monitor if you want.
+- Connect with phone or your computer to new WiFi network `MatrixClock_0000` and go to http://10.0.0.1/
+- The rest should be self-explanatory
+
+## About
+
+This is my first project of this scale and I'm really opened for any suggestions and comments. I'm software developer for the last 25 years, and I can call myself expert in C/C++ but with electronic I did only small hobby projects (mostly using atmel and pic microcontrollers with few sensors and LEDs).
+
+In parallel to C++, for Web projects, I'm using go, node.js and Angular for REST based Web Applications.
