@@ -1,22 +1,24 @@
 #include "web_server.h"
-#include "config.h"
+#include "settings.h"
 
 #include <WebServer.h>
 #include <SPIFFS.h>
 #include <ArduinoJson.h>
 
+const char *APPLICATION_JSON = "application/json";
+const char *TEXT_PLAIN = "text/plain";
+const char *INDEX_HTML = "/index.html";
+const char *OK_MESSAGE = "{\"message\":\"ok\"}";
+
 WiFiServer server(80);
 
-void StartWebServer()
+MatrixClockWebServer matrixClockWebServer{};
+
+void MatrixClockWebServer::MatrixClockWebServer::begin()
 {
 	server.begin();
 	SPIFFS.begin();
 }
-
-const char* APPLICATION_JSON = "application/json";
-const char* TEXT_PLAIN = "text/plain";
-const char* INDEX_HTML = "/index.html";
-const char* OK_MESSAGE = "{\"message\":\"ok\"}";
 
 void SendOKHeader(WiFiClient& client, String contentType, size_t contentSize = 0)
 {
@@ -69,6 +71,10 @@ bool HandleStaticFile(const String& path, WiFiClient& client)
 			contentType = "font/woff2";
 	}
 	SendOKHeader(client, contentType, f.size());
+
+	//TODO: This seams very slow way to read data. I'm not sure if reading data from SPIFFS
+	// is so slow or client.write() is slow, but this call blocks everything for a few seconds.
+	// One alterantive is to make this call running on separate core.
 	client.write(f);
 	return true;
 }
@@ -84,8 +90,8 @@ bool HandleRESTRequest(const String& mode, const String& path, WiFiClient& clien
 			StaticJsonBuffer<2048> jsonBuffer;
 			JsonArray& root = jsonBuffer.createArray();
 			int numSsid = WiFi.scanNetworks();
-			for (int thisNet = 0; thisNet < numSsid && thisNet < 10; thisNet++) {
-
+			for (int thisNet = 0; thisNet < numSsid && thisNet < 10; thisNet++)
+			{
 				JsonObject& item = root.createNestedObject();
 				item["name"] = WiFi.SSID(thisNet);
 				item["channel"] = WiFi.channel(thisNet);
@@ -113,10 +119,7 @@ bool HandleRESTRequest(const String& mode, const String& path, WiFiClient& clien
 			StaticJsonBuffer<200> jsonBuffer;
 			JsonObject& root = jsonBuffer.parseObject(buff);
 
-			root["ssid"].asString();
-			root["password"].asString();
-
-			if (!WriteWlanConfig(root["ssid"].asString(), root["password"].asString()))
+			if (!settings.writeWiFiConfig(root["ssid"].as<char *>(), root["password"].as<char *>()))
 			{
 				SendErrorHeader(client, 500, "Unable to write");
 				return true;
@@ -129,7 +132,6 @@ bool HandleRESTRequest(const String& mode, const String& path, WiFiClient& clien
 			ESP.restart();
 		}
 	}
-
 	return false;
 }
 
@@ -162,7 +164,7 @@ bool HandleRequest(const String& header, WiFiClient& client)
 	return true;
 }
 
-void ProcessWebServerRequests()
+void MatrixClockWebServer::loop()
 {
 	WiFiClient client = server.available();
 	if (client)
