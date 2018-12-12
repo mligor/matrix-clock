@@ -6,7 +6,7 @@
 #include "web_server.h"
 
 // StatusLed needs to create own instance as it is possible to have multiple LEDs
-StatusLed statusLed; 
+StatusLed statusLed;
 
 void setup()
 {

@@ -1,20 +1,18 @@
 #include "terminal.h"
 #include "settings.h"
+#include "wifi_network.h"
 
 Terminal terminal{};
 
 void Terminal::begin()
 {
-	this->on("wifireset", []()
-	{
+	this->on("wifireset", []() {
 		settings.writeWiFiConfig("", "");
-
-		//TODO: reconnect is better then restart;
-		ESP.restart();
+		wifi_network.disconnect();
+		wifi_network.connect();
 	});
-	
-	this->on("hi", []()
-	{
+
+	this->on("hi", []() {
 		Serial.println("Hi to you. How are you today?");
 	});
 }

@@ -8,17 +8,17 @@
 //TODO: extend the class to parse parameters from commands (e.g. echo mligor)
 class Terminal
 {
-public:
+  public:
 	void begin();
 	void loop();
 
-protected:
+  protected:
 	using Fn = std::function<void()>;
 	using FnMap = std::map<String, Fn>;
 
 	Terminal &on(const char *command, const Fn fn);
 
-private:
+  private:
 	FnMap m_commands;
 };
 

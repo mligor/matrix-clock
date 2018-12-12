@@ -8,8 +8,7 @@
 class WiFiNetwork
 {
   public:
-	using RunningMode = enum RunningMode
-	{
+	using RunningMode = enum RunningMode {
 		Disconnected,
 		Configuring,
 		Connecting,
@@ -19,10 +18,16 @@ class WiFiNetwork
 	void begin(String hostName, IPAddress configIP, StatusLed *satusLed = nullptr);
 	void loop();
 
+	void disconnect();
+	void connect();
+	void connectInConfigMode();
+
   private:
-	RunningMode m_mode { Disconnected };
-	int m_wifiStatus { WL_IDLE_STATUS };
-	StatusLed* m_statusLed{ nullptr };
+	RunningMode m_mode{Disconnected};
+	int m_wifiStatus{WL_IDLE_STATUS};
+	StatusLed *m_statusLed{nullptr};
+	String m_hostName;
+	IPAddress m_configIP;
 };
 
 extern WiFiNetwork wifi_network;

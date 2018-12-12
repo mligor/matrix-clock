@@ -1,5 +1,6 @@
 #include "web_server.h"
 #include "settings.h"
+#include "wifi_network.h"
 
 #include <WebServer.h>
 #include <SPIFFS.h>
@@ -20,7 +21,7 @@ void MatrixClockWebServer::MatrixClockWebServer::begin()
 	SPIFFS.begin();
 }
 
-void SendOKHeader(WiFiClient& client, String contentType, size_t contentSize = 0)
+void SendOKHeader(WiFiClient &client, String contentType, size_t contentSize = 0)
 {
 	client.println("HTTP/1.1 200 OK");
 	client.println("Connection: close");
@@ -30,18 +31,18 @@ void SendOKHeader(WiFiClient& client, String contentType, size_t contentSize = 0
 
 	if (contentSize)
 		client.println("Content-Length: " + String(contentSize, 10));
-	
+
 	client.println();
 }
 
-void SendErrorHeader(WiFiClient& client, int errorCode, String errorMessage)
+void SendErrorHeader(WiFiClient &client, int errorCode, String errorMessage)
 {
 	client.println("HTTP/1.1 " + String(errorCode, 10) + " " + errorMessage);
 	client.println("Connection: close");
 	client.println();
 }
 
-bool HandleStaticFile(const String& path, WiFiClient& client)
+bool HandleStaticFile(const String &path, WiFiClient &client)
 {
 	// Currently we read all files from SPIFFS. In final version
 	// Files should be stored on SD Card
@@ -52,11 +53,11 @@ bool HandleStaticFile(const String& path, WiFiClient& client)
 	File f = SPIFFS.open(path, "r");
 	if (!f)
 		return false;
-   
+
 	String contentType = TEXT_PLAIN;
 
 	int extensionPos = path.lastIndexOf(".");
-	if (extensionPos > 0) 
+	if (extensionPos > 0)
 	{
 		String extension = path.substring(extensionPos + 1);
 		if (extension == "ico")
@@ -79,7 +80,7 @@ bool HandleStaticFile(const String& path, WiFiClient& client)
 	return true;
 }
 
-bool HandleRESTRequest(const String& mode, const String& path, WiFiClient& client)
+bool HandleRESTRequest(const String &mode, const String &path, WiFiClient &client)
 {
 	if (mode == "GET")
 	{
@@ -88,11 +89,11 @@ bool HandleRESTRequest(const String& mode, const String& path, WiFiClient& clien
 			SendOKHeader(client, APPLICATION_JSON);
 
 			StaticJsonBuffer<2048> jsonBuffer;
-			JsonArray& root = jsonBuffer.createArray();
+			JsonArray &root = jsonBuffer.createArray();
 			int numSsid = WiFi.scanNetworks();
 			for (int thisNet = 0; thisNet < numSsid && thisNet < 10; thisNet++)
 			{
-				JsonObject& item = root.createNestedObject();
+				JsonObject &item = root.createNestedObject();
 				item["name"] = WiFi.SSID(thisNet);
 				item["channel"] = WiFi.channel(thisNet);
 				item["encrypted"] = (WiFi.encryptionType(thisNet) != WIFI_AUTH_OPEN);
@@ -115,9 +116,9 @@ bool HandleRESTRequest(const String& mode, const String& path, WiFiClient& clien
 				return true;
 			}
 			buff[contentSize] = 0;
-			
+
 			StaticJsonBuffer<200> jsonBuffer;
-			JsonObject& root = jsonBuffer.parseObject(buff);
+			JsonObject &root = jsonBuffer.parseObject(buff);
 
 			if (!settings.writeWiFiConfig(root["ssid"].as<char *>(), root["password"].as<char *>()))
 			{
@@ -127,15 +128,16 @@ bool HandleRESTRequest(const String& mode, const String& path, WiFiClient& clien
 
 			SendOKHeader(client, TEXT_PLAIN);
 			client.println(OK_MESSAGE);
-			client.stop();
-			delay(1000);
-			ESP.restart();
+			client.stop(); // We need to stop client here, as network will be lost and client would never get close
+			wifi_network.disconnect();
+			wifi_network.connect();
+			return true;
 		}
 	}
 	return false;
 }
 
-bool HandleRequest(const String& header, WiFiClient& client)
+bool HandleRequest(const String &header, WiFiClient &client)
 {
 	int modePos = header.indexOf(" ");
 	if (modePos <= 0)
@@ -174,7 +176,7 @@ void MatrixClockWebServer::loop()
 		String header;
 
 		while (client.connected())
-		{ 
+		{
 			// loop while the client's connected
 			if (client.available())
 			{
@@ -182,7 +184,7 @@ void MatrixClockWebServer::loop()
 				Serial.write(c);
 				header += c;
 				if (c == '\n')
-				{ 
+				{
 					// if the byte is a newline character
 					// if the current line is blank, you got two newline characters in a row.
 					// that's the end of the client HTTP request, so send a response:
@@ -209,4 +211,3 @@ void MatrixClockWebServer::loop()
 		Serial.println("request end");
 	}
 }
-
