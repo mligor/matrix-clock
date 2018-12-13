@@ -4,6 +4,7 @@
 #include "wifi_network.h"
 #include "status_led.h"
 #include "web_server.h"
+#include "notifications.h"
 
 // StatusLed needs to create own instance as it is possible to have multiple LEDs
 StatusLed statusLed;
@@ -22,6 +23,8 @@ void setup()
 	wifi_network.begin("MatrixClock_0000", IPAddress(10, 0, 0, 1), &statusLed);
 	// Initialize web server (handling REST request and static files)
 	matrixClockWebServer.begin();
+	// Initialize notification engine
+	notifications.begin("**.cloudmqtt.com", 13924, "*****", "*****");
 }
 
 void loop()
@@ -30,4 +33,5 @@ void loop()
 	terminal.loop();
 	wifi_network.loop();
 	matrixClockWebServer.loop();
+	notifications.loop();
 }

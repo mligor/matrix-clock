@@ -1,6 +1,7 @@
 #include "wifi_network.h"
 #include "settings.h"
 #include <WiFi.h>
+#include "notifications.h"
 
 WiFiNetwork wifi_network{};
 
@@ -9,6 +10,7 @@ void WiFiNetwork::begin(String hostName, IPAddress configIP, StatusLed *satusLed
 	m_statusLed = satusLed;
 	m_hostName = hostName;
 	m_configIP = configIP;
+	connect();
 }
 
 void WiFiNetwork::loop()
@@ -25,6 +27,8 @@ void WiFiNetwork::loop()
 			IPAddress ip = WiFi.localIP();
 			Serial.print("Connected with ip ");
 			Serial.println(ip);
+
+			notifications.connect();
 		}
 		else
 		{
